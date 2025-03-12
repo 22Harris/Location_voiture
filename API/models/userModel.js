@@ -17,11 +17,6 @@ const accountUserSchema = new mongoose.Schema({
         unique: true,
         match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     },
-    phone: {
-        type: String,
-        match: /^\d{10,15}$/,
-        required: true
-    },
     password: {
         type: String,
         required: true

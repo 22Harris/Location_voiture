@@ -1,54 +1,45 @@
 const Account_User = require('../models/userModel');
-const crypt = require('bcrypt');
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const validator = require('validator');
 
-exports.signup_User = async(req, res) => {
+exports.signup_User = async (req, res) => {
+    const { firstname, lastname, email, password } = req.body;
 
-    const {firstname, lastname, email, phone, password} = req.body;
-
-    try{
-
-        const goodEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if(!goodEmail.test(email)){
-            return res.status(400).json({message: 'email invalide'});
+    try {
+        if (!validator.isEmail(email)) {
+            return res.status(400).json({ message: 'Email invalide' });
         }
 
-        const existEmail = await Account_User.findOne({ email: email});
-        if(existEmail){
-            return res.status(400).json({message: 'email existant'});
-        }
-
-        if (phone) {
-            const phoneRegex = /^\d{10,15}$/;
-            if (!phoneRegex.test(phone)) {
-                return res.status(400).json({ message: 'Numéro de téléphone invalide.' });
-            }
+        const existEmail = await Account_User.findOne({ email: email });
+        if (existEmail) {
+            return res.status(400).json({ message: 'Email existant' });
         }
 
         if (!password || password.length < 6) {
             return res.status(400).json({ message: 'Le mot de passe doit contenir au moins 6 caractères' });
         }
 
-        const hash_password = await crypt.hash(password, 10);
+        const hash_password = await bcrypt.hash(password, 10);
+
         const new_user = new Account_User({
             firstname,
             lastname,
             email: email.toLowerCase(),
-            phone: phone || null,
             password: hash_password
         });
         await new_user.save();
 
-        const token = jwt.sign({ID: new_user._id}, MYSECRET, {expiresIn: '1h'});
+        // Génération du token JWT
+        const token = jwt.sign({ ID: new_user._id }, process.env.MYSECRET, { expiresIn: '1h' });
 
-        res.status(201).json({token});
+        res.status(201).json({ token });
 
-    }catch(err){
-        console.log(err);
-        res.status(500).json({message: err.message});
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: err.message });
     }
-
-}
+};
 
 exports.login_User = async(req, res) => {
     const {email, password} = req.body;
@@ -59,12 +50,12 @@ exports.login_User = async(req, res) => {
             return res.status(404).json({message: 'Utilisateur non-trouvé'});
         }
 
-        const isPassword = await crypt.compare(password, userOn.password);
+        const isPassword = await bcrypt.compare(password, userOn.password);
         if(!isPassword){
             return res.status(403).json({message: 'Mot de passe incorrect'})
         }
 
-        const token = jwt.sign({ID: userOn._id}, MYSECRET, {expiresIn: '1h'});
+        const token = jwt.sign({ ID: userOn._id }, process.env.MYSECRET, { expiresIn: '1h' });
         res.status(200).json({token});
 
     }catch(err){

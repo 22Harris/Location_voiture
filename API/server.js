@@ -10,11 +10,11 @@ app.use(express.json());
 app.use(cors());
 
 const userRoute = require('./routes/userRoute');
-app.use('api/user', userRoute);
+app.use('/api/user', userRoute);
 const carRoute = require('./routes/carRoute');
-app.use('api/car', carRoute);
+app.use('/api/car', carRoute);
 const reservationRoute = require('./routes/reservationRoute');
-app.use('api/reservation', reservationRoute);
+app.use('/api/reservation', reservationRoute);
 
 const DBconnect = async()=> {
     const localURI = 'mongodb://localhost:27017/Car_location';
